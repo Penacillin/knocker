@@ -1,0 +1,6 @@
+[submodule "curlpp"]
+	path = curlpp
+	url = https://github.com/jpbarrette/curlpp.git
+[submodule "libgourou"]
+	path = libgourou
+	url = git://soutade.fr/libgourou.git
