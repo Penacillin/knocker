@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
+#include "drmprocessorclientimpl.h"
 
 int main() {
     std::cout << "Hello World" << std::endl;
+    DRMProcessorClientImpl client;
+    const auto resp = client.sendHTTPRequest("url");
+    std::cout << resp << std::endl;
 }

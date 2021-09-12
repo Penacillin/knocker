@@ -3,11 +3,10 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-// #include <QCoreApplication>
-// #include <QNetworkReply>
-// #include <QNetworkRequest>
-// #include <QNetworkAccessManager>
-// #include <QFile>
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
 
 #include <zip.h>
 #include <zlib.h>
@@ -15,6 +14,7 @@
 #include <libgourou_common.h>
 #include <libgourou_log.h>
 #include "drmprocessorclientimpl.h"
+
 
 /* Digest interface */
 void *DRMProcessorClientImpl::createDigest(const std::string &digestName)
@@ -57,61 +57,62 @@ void DRMProcessorClientImpl::randBytes(unsigned char *bytesOut, unsigned int len
 /* HTTP interface */
 std::string DRMProcessorClientImpl::sendHTTPRequest(const std::string &URL, const std::string &POSTData, const std::string &contentType, std::map<std::string, std::string> *responseHeaders)
 {
-    QNetworkRequest request(QUrl(URL.c_str()));
-    QNetworkAccessManager networkManager;
-    QByteArray replyData;
+    // QNetworkRequest request(QUrl(URL.c_str()));
+    // QNetworkAccessManager networkManager;
+    // QByteArray replyData;
 
-    GOUROU_LOG(gourou::INFO, "Send request to " << URL);
-    if (POSTData.size())
-    {
-        GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl
-                                         << POSTData);
-    }
+    // GOUROU_LOG(gourou::INFO, "Send request to " << URL);
+    // if (POSTData.size())
+    // {
+    //     GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl
+    //                                      << POSTData);
+    // }
 
-    request.setRawHeader("Accept", "*/*");
-    request.setRawHeader("User-Agent", "book2png");
-    if (contentType.size())
-        request.setRawHeader("Content-Type", contentType.c_str());
+    // request.setRawHeader("Accept", "*/*");
+    // request.setRawHeader("User-Agent", "book2png");
+    // if (contentType.size())
+    //     request.setRawHeader("Content-Type", contentType.c_str());
 
-    QNetworkReply *reply;
+    // QNetworkReply *reply;
 
-    if (POSTData.size())
-        reply = networkManager.post(request, POSTData.c_str());
-    else
-        reply = networkManager.get(request);
+    // if (POSTData.size())
+    //     reply = networkManager.post(request, POSTData.c_str());
+    // else
+    //     reply = networkManager.get(request);
 
-    QCoreApplication *app = QCoreApplication::instance();
-    networkManager.moveToThread(app->thread());
-    while (!reply->isFinished())
-        app->processEvents();
+    // QCoreApplication *app = QCoreApplication::instance();
+    // networkManager.moveToThread(app->thread());
+    // while (!reply->isFinished())
+    //     app->processEvents();
 
-    QByteArray location = reply->rawHeader("Location");
-    if (location.size() != 0)
-    {
-        GOUROU_LOG(gourou::DEBUG, "New location");
-        return sendHTTPRequest(location.constData(), POSTData, contentType);
-    }
+    // QByteArray location = reply->rawHeader("Location");
+    // if (location.size() != 0)
+    // {
+    //     GOUROU_LOG(gourou::DEBUG, "New location");
+    //     return sendHTTPRequest(location.constData(), POSTData, contentType);
+    // }
 
-    if (reply->error() != QNetworkReply::NoError)
-        EXCEPTION(gourou::CLIENT_NETWORK_ERROR, "Error " << reply->errorString().toStdString());
+    // if (reply->error() != QNetworkReply::NoError)
+    //     EXCEPTION(gourou::CLIENT_NETWORK_ERROR, "Error " << reply->errorString().toStdString());
 
-    QList<QByteArray> headers = reply->rawHeaderList();
-    for (int i = 0; i < headers.size(); ++i)
-    {
-        if (gourou::logLevel >= gourou::DEBUG)
-            std::cout << headers[i].constData() << " : " << reply->rawHeader(headers[i]).constData() << std::endl;
-        if (responseHeaders)
-            (*responseHeaders)[headers[i].constData()] = reply->rawHeader(headers[i]).constData();
-    }
+    // QList<QByteArray> headers = reply->rawHeaderList();
+    // for (int i = 0; i < headers.size(); ++i)
+    // {
+    //     if (gourou::logLevel >= gourou::DEBUG)
+    //         std::cout << headers[i].constData() << " : " << reply->rawHeader(headers[i]).constData() << std::endl;
+    //     if (responseHeaders)
+    //         (*responseHeaders)[headers[i].constData()] = reply->rawHeader(headers[i]).constData();
+    // }
 
-    replyData = reply->readAll();
-    if (reply->rawHeader("Content-Type") == "application/vnd.adobe.adept+xml")
-    {
-        GOUROU_LOG(gourou::DEBUG, ">>> " << std::endl
-                                         << replyData.data());
-    }
+    // replyData = reply->readAll();
+    // if (reply->rawHeader("Content-Type") == "application/vnd.adobe.adept+xml")
+    // {
+    //     GOUROU_LOG(gourou::DEBUG, ">>> " << std::endl
+    //                                      << replyData.data());
+    // }
 
-    return std::string(replyData.data(), replyData.length());
+    // return std::string(replyData.data(), replyData.length());
+    return std::string("Hi");
 }
 
 void DRMProcessorClientImpl::RSAPrivateEncrypt(const unsigned char *RSAKey, unsigned int RSAKeyLength,
