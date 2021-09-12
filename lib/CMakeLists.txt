@@ -2,7 +2,8 @@ project(KnockerLibs)
 add_library(KnockerLibs knock_drmclient.cpp)
 
 find_library(libzip REQUIRED)
-find_package(ZLIB)
+find_package(ZLIB REQUIRED)
+
 
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 find_package(OpenSSL REQUIRED)

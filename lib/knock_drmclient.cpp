@@ -57,33 +57,35 @@ void DRMProcessorClientImpl::randBytes(unsigned char *bytesOut, unsigned int len
 /* HTTP interface */
 std::string DRMProcessorClientImpl::sendHTTPRequest(const std::string &URL, const std::string &POSTData, const std::string &contentType, std::map<std::string, std::string> *responseHeaders)
 {
-    // QNetworkRequest request(QUrl(URL.c_str()));
-    // QNetworkAccessManager networkManager;
-    // QByteArray replyData;
+    curlpp::Cleanup myCleanup;
+    curlpp::Easy request;
+    
+    request.setOpt(new curlpp::options::Url(URL)); 
+    GOUROU_LOG(gourou::INFO, "Send request to " << URL);
+    if (POSTData.size())
+    {
+        GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl
+                                         << POSTData);
+    }
+    request.setOpt(new curlpp::options::Verbose(true)); 
+    
+    std::list<std::string> header; 
+    header.push_back("Accept: */*"); 
+    header.push_back("User-Agent: book2png"); 
+    if (contentType.size())
+        header.push_back("Content-Type: " + contentType); 
+    
+    request.setOpt(new curlpp::options::HttpHeader(header)); 
+    
+    if (POSTData.size()) {
+        // reply = networkManager.post(request, POSTData.c_str());
+        request.setOpt(new curlpp::options::PostFields(POSTData));
+        request.setOpt(new curlpp::options::PostFieldSize(POSTData.size()));
+    }
+    std::ostringstream response;
+    request.setOpt(new curlpp::options::WriteStream(&response));
+    request.perform();
 
-    // GOUROU_LOG(gourou::INFO, "Send request to " << URL);
-    // if (POSTData.size())
-    // {
-    //     GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl
-    //                                      << POSTData);
-    // }
-
-    // request.setRawHeader("Accept", "*/*");
-    // request.setRawHeader("User-Agent", "book2png");
-    // if (contentType.size())
-    //     request.setRawHeader("Content-Type", contentType.c_str());
-
-    // QNetworkReply *reply;
-
-    // if (POSTData.size())
-    //     reply = networkManager.post(request, POSTData.c_str());
-    // else
-    //     reply = networkManager.get(request);
-
-    // QCoreApplication *app = QCoreApplication::instance();
-    // networkManager.moveToThread(app->thread());
-    // while (!reply->isFinished())
-    //     app->processEvents();
 
     // QByteArray location = reply->rawHeader("Location");
     // if (location.size() != 0)
