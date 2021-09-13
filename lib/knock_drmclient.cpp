@@ -3,10 +3,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
+#include <cpr/cpr.h>
 
 #include <zip.h>
 #include <zlib.h>
@@ -57,64 +54,42 @@ void DRMProcessorClientImpl::randBytes(unsigned char *bytesOut, unsigned int len
 /* HTTP interface */
 std::string DRMProcessorClientImpl::sendHTTPRequest(const std::string &URL, const std::string &POSTData, const std::string &contentType, std::map<std::string, std::string> *responseHeaders)
 {
-    curlpp::Cleanup myCleanup;
-    curlpp::Easy request;
-    
-    request.setOpt(new curlpp::options::Url(URL)); 
     GOUROU_LOG(gourou::INFO, "Send request to " << URL);
-    if (POSTData.size())
-    {
-        GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl
-                                         << POSTData);
-    }
-    request.setOpt(new curlpp::options::Verbose(true)); 
+    GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl << POSTData);
+    cpr::Session session;
+    session.SetUrl(URL);
+    session.SetHeader({{"User-Agent", "book2png"}, {"Accept", "*/*"}});
     
-    std::list<std::string> header; 
-    header.push_back("Accept: */*"); 
-    header.push_back("User-Agent: book2png"); 
     if (contentType.size())
-        header.push_back("Content-Type: " + contentType); 
-    
-    request.setOpt(new curlpp::options::HttpHeader(header)); 
-    
+        session.UpdateHeader({{"Content-Type", contentType.c_str()}});
+
+    cpr::Response r;
     if (POSTData.size()) {
-        // reply = networkManager.post(request, POSTData.c_str());
-        request.setOpt(new curlpp::options::PostFields(POSTData));
-        request.setOpt(new curlpp::options::PostFieldSize(POSTData.size()));
+        session.SetBody(POSTData);
+        r = session.Post();
+    } else {
+        r = session.Get();
     }
-    std::ostringstream response;
-    request.setOpt(new curlpp::options::WriteStream(&response));
-    request.perform();
+    if (r.header.find("Location") != r.header.end()) {
+        const auto location = r.header["Location"];
+        GOUROU_LOG(gourou::DEBUG, "New location");
+        return sendHTTPRequest(location, POSTData, contentType);
+    }
+    if (r.error.code != cpr::ErrorCode::OK)
+        EXCEPTION(gourou::CLIENT_NETWORK_ERROR, "Error " << r.error.message);
 
+    if (responseHeaders) {
+        for (const auto& [k, v] : r.header) {
+            (*responseHeaders)[k] = v;
+        }
+    }
 
-    // QByteArray location = reply->rawHeader("Location");
-    // if (location.size() != 0)
-    // {
-    //     GOUROU_LOG(gourou::DEBUG, "New location");
-    //     return sendHTTPRequest(location.constData(), POSTData, contentType);
-    // }
+    if (r.header["Content-Type"] == "application/vnd.adobe.adept+xml")
+    {
+	    GOUROU_LOG(gourou::DEBUG, ">>> " << std::endl << r.text);
+    }
 
-    // if (reply->error() != QNetworkReply::NoError)
-    //     EXCEPTION(gourou::CLIENT_NETWORK_ERROR, "Error " << reply->errorString().toStdString());
-
-    // QList<QByteArray> headers = reply->rawHeaderList();
-    // for (int i = 0; i < headers.size(); ++i)
-    // {
-    //     if (gourou::logLevel >= gourou::DEBUG)
-    //         std::cout << headers[i].constData() << " : " << reply->rawHeader(headers[i]).constData() << std::endl;
-    //     if (responseHeaders)
-    //         (*responseHeaders)[headers[i].constData()] = reply->rawHeader(headers[i]).constData();
-    // }
-
-    // replyData = reply->readAll();
-    // if (reply->rawHeader("Content-Type") == "application/vnd.adobe.adept+xml")
-    // {
-    //     GOUROU_LOG(gourou::DEBUG, ">>> " << std::endl
-    //                                      << replyData.data());
-    // }
-
-    // return std::string(replyData.data(), replyData.length());
-    return std::string("Hi");
+    return r.text;
 }
 
 void DRMProcessorClientImpl::RSAPrivateEncrypt(const unsigned char *RSAKey, unsigned int RSAKeyLength,

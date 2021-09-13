@@ -12,7 +12,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
                         zip
                         ZLIB::ZLIB
                         updflibrary
-                        libgourou)
+                        libgourou
+                        cpr::cpr)
 
 target_link_directories(KnockerLibs PUBLIC curlpp)
 target_include_directories(KnockerLibs PUBLIC

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 # set the project name
 project(Knocker)
+set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(curlpp)
 
@@ -15,7 +16,7 @@ target_include_directories(Knocker PUBLIC
                         "${PROJECT_SOURCE_DIR}/curlpp")
 
 include(FetchContent)
-FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG f4622efcb59d84071ae11404ae61bd821c1c344b) # the commit hash for 1.6.2
+FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG 1.6.2)
 FetchContent_MakeAvailable(cpr)
 
 #libgourou

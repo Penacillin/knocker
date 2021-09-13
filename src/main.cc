@@ -5,6 +5,6 @@
 int main() {
     std::cout << "Hello World" << std::endl;
     DRMProcessorClientImpl client;
-    const auto resp = client.sendHTTPRequest("url");
+    const auto resp = client.sendHTTPRequest("http://example.org/");
     std::cout << resp << std::endl;
 }
