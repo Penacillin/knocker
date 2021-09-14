@@ -1,2 +1,2 @@
 add_subdirectory(acsmdownloader)
-# add_subdirectory(adeptactivate)
+add_subdirectory(adeptactivate)
