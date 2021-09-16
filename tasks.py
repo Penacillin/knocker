@@ -1,8 +1,9 @@
 from invoke import task
 
 @task
-def build(c, verbose=False):
-    c.run("cmake --configure  --build build")
+def build(c, verbose=False, configure=False):
+    if configure:
+        c.run("cmake --configure  --build build")
     build_cmd = "cmake --build build --target all"
     if verbose:
         build_cmd += " -v"

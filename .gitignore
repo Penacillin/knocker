@@ -12,3 +12,4 @@ _deps
 
 build
 *.a
+.adept

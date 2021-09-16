@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string>
+#include <string.h>
 #include <iostream>
 #include <optional>
 #include <filesystem>
@@ -21,6 +22,7 @@ static bool exportPrivateKey = false;
 static const char *outputFile = 0;
 static const char *outputDir = 0;
 static const char *defaultDirs[] = {
+    "~/.adept/",
     ".adept/",
     "./adobe-digital-editions/",
     "./.adobe-digital-editions/"};
@@ -106,24 +108,24 @@ public:
 };
 
 
-static std::optional<std::string> findFile(std::optional<std::string> filename, bool inDefaultDirs = true)
+static const char* findFile(const char* filename, bool inDefaultDirs = true)
 {
-    if (filename.has_value() && fs::exists(filename.value()))
-        return filename.value();
+    if (filename && fs::exists(filename))
+        return strdup(filename);
 
     if (!inDefaultDirs)
-        return std::nullopt;
+        return nullptr;
 
-    if (!filename.has_value()) return std::nullopt;
+    if (!filename) return nullptr;
 
     for (int i = 0; i < size(defaultDirs); i++)
     {
-        const auto path = std::string(defaultDirs[i]) + std::string(filename.value());
+        const auto path = std::string(defaultDirs[i]) + std::string(filename);
         if (std::filesystem::exists(path))
-            return path;
+            return path.c_str();
     }
 
-    return std::nullopt;
+    return nullptr;
 }
 
 static void version(void)
@@ -191,8 +193,8 @@ int main(int argc, char **argv)
 {
     int c, ret = -1;
 
-    // const char **files[] = {&devicekeyFile, &deviceFile, &activationFile};
-    std::array<std::optional<std::string>, 3> files{devicekeyFile, deviceFile, activationFile};
+    const char **files[] = {&devicekeyFile, &deviceFile, &activationFile};
+    // std::array<std::optional<std::string>, 3> files{devicekeyFile, deviceFile, activationFile};
     int verbose = gourou::DRMProcessor::getLogLevel();
 
     while (1)
@@ -219,16 +221,13 @@ int main(int argc, char **argv)
         switch (c)
         {
         case 'd':
-            // deviceFile = optarg;
-            files[1] = optarg;
+            deviceFile = optarg;
             break;
         case 'a':
-            // activationFile = optarg;
-            files[2] = optarg;
+            activationFile = optarg;
             break;
         case 'k':
-            // devicekeyFile = optarg;
-            files[0] = optarg;
+            devicekeyFile = optarg;
             break;
         case 'f':
             acsmFile = optarg;
@@ -271,15 +270,17 @@ int main(int argc, char **argv)
     int i;
     bool hasErrors = false;
     std::string orig;
-    for (i = 0; i < files.size(); i++)
+    for (i = 0; i < size(files); i++)
     {
-        orig = files[i].value();
-        files[i] = findFile(files[i]);
-        if (!files[i].has_value())
+        orig = *files[i];
+	    *files[i] = findFile(*files[i]);
+        if (!*files[i])
         {
             std::cout << "Error : " << orig << " doesn't exists, did you activate your device ?" << std::endl;
             ret = -1;
             hasErrors = true;
+        } else {
+            std::cout << "Using file: " << *files[i] << std::endl;
         }
     }
 
@@ -290,6 +291,7 @@ int main(int argc, char **argv)
     {
         if (acsmFile)
         {
+            std::cout << "Can't specify -e and -f at the same time." << std::endl;
             usage(argv[0]);
             return -1;
         }

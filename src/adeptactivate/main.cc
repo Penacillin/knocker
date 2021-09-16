@@ -5,20 +5,25 @@
 
 #include <iostream>
 #include <ostream>
+#include <optional>
 #include <filesystem>
 #include <string.h>
 
 #include <libgourou.h>
 #include "drmprocessorclientimpl.h"
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#ifdef DEFAULT_ADEPT_DIR
+#undef DEFAULT_ADEPT_DIR
+#endif
+#define DEFAULT_ADEPT_DIR "~/.adept"
+
 
 template <class T, size_t N>
 constexpr size_t size(T (&)[N]) { return N; }
 
-static const char *username = 0;
-static const char *password = 0;
-static const char *outputDir = 0;
+static const char *username = nullptr;
+static const char *password = nullptr;
+std::optional<std::string> outputDir = std::nullopt;
 static const char *hobbesVersion = HOBBES_DEFAULT_VERSION;
 static bool randomSerial = false;
 
@@ -82,13 +87,14 @@ public:
         try
         {
             DRMProcessorClientImpl client;
+            const char* dirval = outputDir.has_value() ? outputDir.value().c_str() : nullptr;
             gourou::DRMProcessor *processor = gourou::DRMProcessor::createDRMProcessor(
-                &client, randomSerial, outputDir, hobbesVersion);
+                &client, randomSerial, dirval, hobbesVersion);
 
             processor->signIn(username, password);
             processor->activateDevice();
 
-            std::cout << username << " fully signed and device activated in " << outputDir << std::endl;
+            std::cout << username << " fully signed and device activated in " << outputDir.value() << std::endl;
         }
         catch (std::exception &e)
         {
@@ -156,7 +162,7 @@ static std::string abspath(std::string filename)
 int main(int argc, char **argv)
 {
     int c, ret = -1;
-    const char* _outputDir = outputDir;
+    auto _outputDir = outputDir;
     int verbose = gourou::DRMProcessor::getLogLevel();
 
     while (1)
@@ -187,7 +193,7 @@ int main(int argc, char **argv)
             password = optarg;
             break;
         case 'O':
-            _outputDir = optarg;
+            _outputDir = std::string(optarg);
             break;
         case 'H':
             hobbesVersion = optarg;
@@ -218,24 +224,26 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if (!_outputDir || _outputDir[0] == 0)
+    if (!_outputDir || _outputDir.value().size() == 0)
     {
-        outputDir = abspath(DEFAULT_ADEPT_DIR).c_str();
+        outputDir = DEFAULT_ADEPT_DIR;
     }
     else
     {
         // Relative path
-        if (_outputDir[0] == '.' || _outputDir[0] != '/')
+        if (_outputDir.value()[0] == '.' || _outputDir.value()[0] != '/')
         {
             // realpath doesn't works if file/dir doesn't exists
-            if (fs::exists(_outputDir))
-                outputDir = realpath(_outputDir, 0);
+            if (fs::exists(_outputDir.value()))
+                outputDir = realpath(_outputDir.value().c_str(), 0);
             else
-                outputDir = abspath(_outputDir).c_str();
+                outputDir = abspath(_outputDir.value()).c_str();
         }
         else
-            outputDir = strdup(_outputDir);
+            outputDir = _outputDir;
     }
+
+    std::cout << "Outputting files to: " << outputDir.value() << std::endl;
 
     if (!password)
     {
@@ -249,6 +257,5 @@ int main(int argc, char **argv)
 
     activate.run();
 
-    free((void *)outputDir);
     return ret;
 }

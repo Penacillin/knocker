@@ -56,10 +56,13 @@ std::string DRMProcessorClientImpl::sendHTTPRequest(const std::string &URL, cons
 {
     GOUROU_LOG(gourou::INFO, "Send request to " << URL);
     GOUROU_LOG(gourou::DEBUG, "<<< " << std::endl << POSTData);
+
     cpr::Session session;
     session.SetUrl(URL);
     session.SetHeader({{"User-Agent", "book2png"}, {"Accept", "*/*"}});
-    
+    cpr::SslOptions sslOpts = cpr::Ssl(cpr::ssl::VerifyHost{false}, cpr::ssl::VerifyPeer{false});
+    session.SetSslOptions(sslOpts);
+
     if (contentType.size())
         session.UpdateHeader({{"Content-Type", contentType.c_str()}});
 
@@ -78,8 +81,10 @@ std::string DRMProcessorClientImpl::sendHTTPRequest(const std::string &URL, cons
     if (r.error.code != cpr::ErrorCode::OK)
         EXCEPTION(gourou::CLIENT_NETWORK_ERROR, "Error " << r.error.message);
 
-    if (responseHeaders) {
-        for (const auto& [k, v] : r.header) {
+    for (const auto& [k, v] : r.header) {
+        if (gourou::logLevel >= gourou::DEBUG)
+            std::cout << k << " : "  << v << std::endl;
+        if (responseHeaders) {
             (*responseHeaders)[k] = v;
         }
     }
