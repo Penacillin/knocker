@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     
     - name: installs deps
       run: sudo apt update && sudo apt install -y libcurl4-openssl-dev libssl-dev zlib1g-dev libzip4
