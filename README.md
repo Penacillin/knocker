@@ -21,7 +21,7 @@ inv build -c
 ```
 with just CMake:
 ```bash
-cmake --configure  --build build
+cmake -S . -B build
 cmake --build build --target all
 ```
 
