@@ -13,7 +13,9 @@ def build(c, verbose=False, configure=False):
 
 @task
 def clean(c):
-    build_cmd = "cmake --build build --target clean"
-    c.run(build_cmd)
+    try:
+        c.run("cmake --build build --target clean")
+    except Exception as e:
+        print(e)
     shutil.rmtree('build', ignore_errors=True)
     shutil.rmtree('CMakeFiles', ignore_errors=True)
