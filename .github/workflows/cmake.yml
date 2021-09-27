@@ -24,14 +24,20 @@ jobs:
         submodules: true
     
     - name: installs deps
-      run: sudo apt update && sudo apt install -y libcurl4-openssl-dev libssl-dev zlib1g-dev libzip-dev
+      run: |
+        sudo apt update && sudo apt install -y libcurl4-openssl-dev libssl-dev zlib1g-dev libzip-dev
+        sudo apt list -a cmake
+        sudo apt install -y --allow-downgrades cmake=3.16.3-1ubuntu1 cmake-data=3.16.3-1ubuntu1
+        which cmake
+        /usr/bin/cmake --version
+        cmake --version
+        gcc --version
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -S ${{github.workspace}} -B ${{github.workspace}}/build
+      run: /usr/bin/cmake -S ${{github.workspace}} -B ${{github.workspace}}/build
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build build --target all
-      
+      run: /usr/bin/cmake --build build --target all
